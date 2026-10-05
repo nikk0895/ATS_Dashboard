@@ -11,35 +11,42 @@ import App from "./App";
 
 const msalInstance = new PublicClientApplication(msalConfig);
 
-// Ensure MSAL has finished loading any cached account before first render
-if (!msalInstance.getActiveAccount() && msalInstance.getAllAccounts().length > 0) {
-  msalInstance.setActiveAccount(msalInstance.getAllAccounts()[0]);
-}
-
-msalInstance.addEventCallback((event) => {
-  if (event.eventType === EventType.LOGIN_SUCCESS && event.payload.account) {
-    msalInstance.setActiveAccount(event.payload.account);
-  }
-});
-
-// Ant Design theme tokens — centralize brand colors here so every
-// component (buttons, tables, tags) picks them up automatically.
 const antdTheme = {
   token: {
-    colorPrimary: "#1a56db", // swap for your brand color
+    colorPrimary: "#1a56db",
     borderRadius: 8,
     fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
   },
 };
 
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <MsalProvider instance={msalInstance}>
-      <ConfigProvider theme={antdTheme}>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </ConfigProvider>
-    </MsalProvider>
-  </React.StrictMode>
-);
+async function bootstrap() {
+  await msalInstance.initialize();
+
+  // Finish the redirect login (reads the response from the URL) BEFORE routing starts
+  const result = await msalInstance.handleRedirectPromise();
+  if (result?.account) {
+    msalInstance.setActiveAccount(result.account);
+  } else if (!msalInstance.getActiveAccount() && msalInstance.getAllAccounts().length > 0) {
+    msalInstance.setActiveAccount(msalInstance.getAllAccounts()[0]);
+  }
+
+  msalInstance.addEventCallback((event) => {
+    if (event.eventType === EventType.LOGIN_SUCCESS && event.payload?.account) {
+      msalInstance.setActiveAccount(event.payload.account);
+    }
+  });
+
+  ReactDOM.createRoot(document.getElementById("root")).render(
+    <React.StrictMode>
+      <MsalProvider instance={msalInstance}>
+        <ConfigProvider theme={antdTheme}>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </ConfigProvider>
+      </MsalProvider>
+    </React.StrictMode>
+  );
+}
+
+bootstrap();

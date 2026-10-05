@@ -6,9 +6,10 @@
 
 export const msalConfig = {
   auth: {
-    clientId: "6afa35d6-b2ec-4aa7-9f98-eb618f28fd11", // <-- from Entra App Registration
+    clientId: "5478bc05-7691-4d60-8d8a-9f3193af8b42", // <-- from Entra App Registration
     authority: "https://login.microsoftonline.com/aabc3e64-9f41-41d7-aefe-7c009102d1b0", // <-- Directory (tenant) ID
     redirectUri: "http://localhost:5173", // must exactly match a Redirect URI registered in Entra
+      postLogoutRedirectUri: "http://localhost:5173/login",
   },
   cache: {
     cacheLocation: "sessionStorage", // safer default than localStorage for auth tokens
