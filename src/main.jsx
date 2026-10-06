@@ -21,7 +21,14 @@ const antdTheme = {
 
 async function bootstrap() {
   await msalInstance.initialize();
-
+  try {
+    const result = await msalInstance.handleRedirectPromise();
+    if (result?.account) {
+      msalInstance.setActiveAccount(result.account);
+    }
+  } catch (err) {
+    console.error("MSAL redirect error:", err);   // check the browser console
+  }
   // Finish the redirect login (reads the response from the URL) BEFORE routing starts
   const result = await msalInstance.handleRedirectPromise();
   if (result?.account) {

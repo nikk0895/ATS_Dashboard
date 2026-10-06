@@ -1,8 +1,9 @@
 // src/pages/DashboardPage.jsx
-import { Layout, Typography, Button, Card, Row, Col, Avatar, Space } from "antd";
+import { useEffect, useState } from "react";
+import { Typography, Card, Row, Col, Alert } from "antd";
 import { useMsal } from "@azure/msal-react";
+import useApi from "../api/useApi";
 
-const { Header, Content } = Layout;
 const { Title, Text } = Typography;
 
 const modules = [
@@ -15,50 +16,42 @@ export default function DashboardPage() {
   const { instance, accounts } = useMsal();
   const account = instance.getActiveAccount() || accounts[0];
   const name = account?.name || "there";
-  const email = account?.username;
 
-  const handleLogout = () => {
-    instance.logoutRedirect({
-      account,
-      postLogoutRedirectUri: "http://localhost:5173/login",
-    });
-  };
+  const api = useApi();
+  const [apiStatus, setApiStatus] = useState(null);
+
+  useEffect(() => {
+    api
+      .get("/api/me")
+      .then((me) => setApiStatus({ ok: true, text: `API verified you as ${me.email}` }))
+      .catch((e) => setApiStatus({ ok: false, text: e.message }));
+  }, [api]);
 
   return (
-    <Layout style={{ minHeight: "100vh", background: "#F5F6FA" }}>
-      <Header
-        style={{
-          background: "#101B33",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 32px",
-        }}
-      >
-        <span style={{ color: "#F5F6FA", fontWeight: 600, fontSize: 18 }}>TA Tool</span>
-        <Space size={16}>
-          <Avatar style={{ background: "#1a56db" }}>{name.charAt(0).toUpperCase()}</Avatar>
-          <Text style={{ color: "#AEB6CC" }}>{email}</Text>
-          <Button onClick={handleLogout}>Sign out</Button>
-        </Space>
-      </Header>
+    <>
+      <Title level={2} style={{ marginBottom: 4 }}>
+        Welcome, {name}
+      </Title>
+      <Text type="secondary">Choose a module to get started.</Text>
 
-      <Content style={{ padding: "48px 32px", maxWidth: 1100, margin: "0 auto", width: "100%" }}>
-        <Title level={2} style={{ marginBottom: 4 }}>
-          Welcome, {name}
-        </Title>
-        <Text type="secondary">Choose a module to get started.</Text>
+      {apiStatus && (
+        <Alert
+          style={{ marginTop: 16 }}
+          type={apiStatus.ok ? "success" : "error"}
+          message={apiStatus.text}
+          showIcon
+        />
+      )}
 
-        <Row gutter={[24, 24]} style={{ marginTop: 32 }}>
-          {modules.map((m) => (
-            <Col xs={24} md={8} key={m.title}>
-              <Card hoverable title={m.title}>
-                <Text type="secondary">{m.desc}</Text>
-              </Card>
-            </Col>
-          ))}
-        </Row>
-      </Content>
-    </Layout>
+      <Row gutter={[24, 24]} style={{ marginTop: 32 }}>
+        {modules.map((m) => (
+          <Col xs={24} md={8} key={m.title}>
+            <Card hoverable title={m.title}>
+              <Text type="secondary">{m.desc}</Text>
+            </Card>
+          </Col>
+        ))}
+      </Row>
+    </>
   );
 }
